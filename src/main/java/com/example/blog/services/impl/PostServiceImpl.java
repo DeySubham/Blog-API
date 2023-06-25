@@ -5,6 +5,7 @@ import com.example.blog.entities.Post;
 import com.example.blog.entities.User;
 import com.example.blog.exceptions.ResourceNotFoundException;
 import com.example.blog.payloads.PostDto;
+import com.example.blog.payloads.PostResponse;
 import com.example.blog.repositories.CategoryRepo;
 import com.example.blog.repositories.PostRepo;
 import com.example.blog.repositories.UserRepo;
@@ -61,35 +62,39 @@ public class PostServiceImpl implements PostService {
     }
 
     @Override
-    public List<PostDto> getPosts(Integer pageNumber, Integer pageSize) {
-        Pageable pageable = PageRequest.of(pageNumber, pageSize);
-        Page<Post> pagePosts = postRepo.findAll(pageable);
-        List<Post> allPosts = pagePosts.getContent();
-        List<PostDto> postDtos = allPosts.stream().map(post -> postToDto(post)).collect(Collectors.toList());
-        return postDtos;
-    }
-
-    @Override
     public PostDto getPostById(Integer postId) {
         Post post = postRepo.findById(postId).orElseThrow(() -> new ResourceNotFoundException("Post", "Id", postId));
         return postToDto(post);
     }
 
     @Override
-    public List<PostDto> getPostByCategory(Integer categoryId) {
+    public PostResponse getPostByCategory(Integer categoryId, Integer pageNumber, Integer pageSize) {
+        Pageable pageable = PageRequest.of(pageNumber, pageSize);
         Category category = categoryRepo.findById(categoryId).orElseThrow(() -> new ResourceNotFoundException("Category", "Id", categoryId));
-        List<Post> posts = postRepo.findByCategory(category);
-
+        Page<Post> pagePosts = postRepo.findByCategory(category, pageable);
+        List<Post> posts = pagePosts.getContent();
         List<PostDto> postDtos = posts.stream().map(post -> postToDto(post)).collect(Collectors.toList());
-        return postDtos;
+        return new PostResponse(postDtos, pageNumber, pageSize, pagePosts.getTotalElements(), pagePosts.getTotalPages(), pagePosts.isLast());
     }
 
     @Override
-    public List<PostDto> getPostByUser(Integer userId) {
+    public PostResponse getPostByUser(Integer userId, Integer pageNumber, Integer pageSize) {
+        Pageable pageable = PageRequest.of(pageNumber, pageSize);
         User user = userRepo.findById(userId).orElseThrow(()-> new ResourceNotFoundException("User", "Id", userId));
-        List<Post> posts = postRepo.findByUser(user);
+        Page<Post> pagePosts = postRepo.findByUser(user, pageable);
+        List<Post> posts = pagePosts.getContent();
         List<PostDto> postDtos = posts.stream().map(post -> postToDto(post)).collect(Collectors.toList());
-        return postDtos;
+        return new PostResponse(postDtos, pageNumber, pageSize, pagePosts.getTotalElements(), pagePosts.getTotalPages(), pagePosts.isLast());
+    }
+
+    @Override
+    public PostResponse getPosts(Integer pageNumber, Integer pageSize) {
+        Pageable pageable = PageRequest.of(pageNumber, pageSize);
+        Page<Post> pagePosts = postRepo.findAll(pageable);
+        List<Post> allPosts = pagePosts.getContent();
+        List<PostDto> postDtos = allPosts.stream().map(post -> postToDto(post)).collect(Collectors.toList());
+
+        return new PostResponse(postDtos, pageNumber, pageSize, pagePosts.getTotalElements(), pagePosts.getTotalPages(), pagePosts.isLast());
     }
 
     @Override
