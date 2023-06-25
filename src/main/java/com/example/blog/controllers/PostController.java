@@ -1,5 +1,6 @@
 package com.example.blog.controllers;
 
+import com.example.blog.payloads.ApiResponse;
 import com.example.blog.payloads.PostDto;
 import com.example.blog.services.PostService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -43,7 +44,22 @@ public class PostController {
     }
 
     @GetMapping("/posts")
-    public ResponseEntity<List<PostDto>> getPosts() {
-        return ResponseEntity.ok(postService.getPosts());
+    public ResponseEntity<List<PostDto>> getPosts(
+            @RequestParam(value = "pageNumber") Integer pageNumber,
+            @RequestParam(value = "pageSize") Integer pageSize
+    ) {
+        return ResponseEntity.ok(postService.getPosts(pageNumber, pageSize));
+    }
+
+    @DeleteMapping("/posts/{postId}")
+    public ApiResponse deletePost(@PathVariable Integer postId) {
+        postService.deletePost(postId);
+        return new ApiResponse("Post deleted successfully", true);
+    }
+
+    @PutMapping("posts/{postId}")
+    public ResponseEntity<PostDto> updatePost(@RequestBody PostDto postDto, @PathVariable Integer postId) {
+        PostDto updatedPost = postService.updatePost(postDto, postId);
+        return ResponseEntity.ok(updatedPost);
     }
 }
